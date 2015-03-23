@@ -1609,29 +1609,38 @@ class Py3statusWrapper():
                 ds = ds.split('\n\n', 1)[0]  # Filter only up to an empty line.
                 ds = ds.split('.', 1)[0]  # And the first dot
                 ds = ds.replace('\n', ' ')
-                print_stderr("  %-22s %s." % (mod_name, ds))
+                print_stderr('  %-22s %s.' % (mod_name, ds))
             else:
-                print_stderr("  %-22s No docstring in %s" % (mod_name, path))
+                print_stderr('  %-22s No docstring in %s' % (mod_name, path))
         except Exception:
-            print_stderr("  %-22s Unable to parse %s" % (mod_name, path))
+            print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
 
     def handle_cli_command(self, cmd, cmd_arg=None):
         """Handle a command from the CLI.
         """
-        if cmd[:2] == ['list', 'modules']:
-            import imp
-            py3_modules_path = imp.find_module('py3status')[1]
-            self.config['include_paths'].append(py3_modules_path+'/modules/')
-            #
-            user_modules = self.get_user_modules()
-            print_stderr('Available modules:')
-            for mod_name, mod_path in sorted(user_modules.items()):
-                self.print_module_description(mod_name, mod_path)
+        try:
+            # aliases
+            if cmd[0] in ['mod', 'module', 'modules']:
+                cmd[0] = 'modules'
 
-            sys.exit()
-
-        print_stderr('Error: unknown command')
-        sys.exit(1)
+            # handle allowed commands
+            if cmd[:2] == ['modules', 'list']:
+                import imp
+                py3_modules_path = imp.find_module('py3status')[1]
+                self.config['include_paths'].append(
+                    py3_modules_path + '/modules/'
+                )
+                #
+                user_modules = self.get_user_modules()
+                print_stderr('Available modules:')
+                for mod_name, mod_path in sorted(user_modules.items()):
+                    self.print_module_description(mod_name, mod_path)
+                return
+            else:
+                raise ValueError('unknown command')
+        except:
+            print_stderr('Error: unknown command')
+            sys.exit(1)
 
 
 def main():
