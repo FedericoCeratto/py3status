@@ -1619,11 +1619,11 @@ class Py3statusWrapper():
         """Handle a command from the CLI.
         """
         try:
-            # aliases
             if cmd[0] in ['mod', 'module', 'modules']:
                 cmd[0] = 'modules'
+            else:
+                raise RuntimeError
 
-            # handle allowed commands
             if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
                 try:
                     py3_modules_path = imp.find_module('py3status')[1]
@@ -1639,9 +1639,14 @@ class Py3statusWrapper():
                 print_stderr('Available modules:')
                 for mod_name, mod_path in sorted(user_modules.items()):
                     self.print_module_description(details, mod_name, mod_path)
+            elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
+                # TODO: to be implemented
+                pass
             else:
-                print_stderr('Error: unknown command')
-                sys.exit(1)
+                raise RuntimeError
+        except RuntimeError as err:
+            print_stderr('Error: unknown command')
+            sys.exit(1)
         except Exception as err:
             print_stderr('Error: {}'.format(err))
             sys.exit(2)
