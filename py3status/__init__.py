@@ -1617,7 +1617,7 @@ class Py3statusWrapper():
         except Exception:
             print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
 
-    def handle_cli_command(self, cmd, cmd_arg=None):
+    def handle_cli_command(self, cmd):
         """Handle a command from the CLI.
         """
         try:
