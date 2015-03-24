@@ -1291,7 +1291,7 @@ class Py3statusWrapper():
         # setup configuration
         self.config = self.get_config()
 
-        if 'cli_command' in self.config:
+        if self.config.get('cli_command'):
             self.handle_cli_command(self.config['cli_command'])
             sys.exit()
 
