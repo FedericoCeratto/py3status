@@ -1591,7 +1591,7 @@ class Py3statusWrapper():
             sleep(0.1)
 
     @staticmethod
-    def print_module_description(mod_name, mod_path):
+    def print_module_description(details, mod_name, mod_path):
         """Print module description extracted from its docstring.
         """
         if mod_name == '__init__':
@@ -1602,14 +1602,14 @@ class Py3statusWrapper():
             with open(path) as f:
                 module = ast.parse(f.read())
 
-            items = [i for i in module.body if isinstance(i, ast.Expr)]
-            if items:
-                ds = items[0].value.s
-                ds = ds.lstrip()
-                ds = ds.split('\n\n', 1)[0]  # Filter only up to an empty line.
-                ds = ds.split('.', 1)[0]  # And the first dot
-                ds = ds.replace('\n', ' ')
-                print_stderr('  %-22s %s.' % (mod_name, ds))
+            docstring = ast.get_docstring(module, clean=True)
+            if docstring:
+                short_description = docstring.split('\n')[0].rstrip('.')
+                print_stderr('  %-22s %s.' % (mod_name, short_description))
+                if details:
+                    for description in docstring.split('\n')[1:]:
+                        print_stderr(' ' * 25 + '%s' % description)
+                    print_stderr(' ' * 25 + '---')
             else:
                 print_stderr('  %-22s No docstring in %s' % (mod_name, path))
         except Exception:
@@ -1624,23 +1624,27 @@ class Py3statusWrapper():
                 cmd[0] = 'modules'
 
             # handle allowed commands
-            if cmd[:2] == ['modules', 'list']:
-                import imp
-                py3_modules_path = imp.find_module('py3status')[1]
-                self.config['include_paths'].append(
-                    py3_modules_path + '/modules/'
-                )
-                #
+            if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
+                try:
+                    py3_modules_path = imp.find_module('py3status')[1]
+                    py3_modules_path += '/modules/'
+                    if os.path.isdir(py3_modules_path):
+                        self.config['include_paths'].append(py3_modules_path)
+                except:
+                    print_stderr('Unable to locate py3status modules !')
+
+                details = cmd[1] == 'details'
                 user_modules = self.get_user_modules()
+
                 print_stderr('Available modules:')
                 for mod_name, mod_path in sorted(user_modules.items()):
-                    self.print_module_description(mod_name, mod_path)
-                return
+                    self.print_module_description(details, mod_name, mod_path)
             else:
-                raise ValueError('unknown command')
-        except:
-            print_stderr('Error: unknown command')
-            sys.exit(1)
+                print_stderr('Error: unknown command')
+                sys.exit(1)
+        except Exception as err:
+            print_stderr('Error: {}'.format(err))
+            sys.exit(2)
 
 
 def main():
